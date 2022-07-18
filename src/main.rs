@@ -13,11 +13,25 @@ fn main() {
     let context_builder = glium::glutin::ContextBuilder::new();
     // 4. Build the Display with the given window and OpenGL context parameters and register the window with the events_loop.
     let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
-	
 
 	loop {
-		let mut frame = display.draw();
-		frame.clear_color(0.5, 0., 0., 0.);
-		frame.finish();
+		events_loop.run(move |event, _, control_flow| {
+			*control_flow = match event {
+				glutin::event::Event::WindowEvent { event, .. } => match event {
+					glutin::event::WindowEvent::CloseRequested => glutin::event_loop::ControlFlow::Exit,
+					_ => glutin::event_loop::ControlFlow::Poll
+				},
+				glutin::event::Event::MainEventsCleared => {
+					let mut frame = display.draw();
+					frame.clear_color(0.5, 0., 0., 0.);
+					frame.finish().unwrap();
+					glutin::event_loop::ControlFlow::Poll
+				}
+				_ => {
+					println!("{:?}", event);
+					glutin::event_loop::ControlFlow::Poll
+				}
+			}
+		});
 	}
 }
