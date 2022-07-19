@@ -1,4 +1,4 @@
-use glium::{self, uniforms};
+use glium::{self, uniforms, Blend};
 use glium::{glutin, glutin::{event_loop, window, dpi}, texture, Surface};
 use std::io::Cursor;
 
@@ -36,6 +36,10 @@ fn main() {
 		magnify_filter: uniforms::MagnifySamplerFilter::Nearest,
 		..Default::default()
 	};
+	let draw_parameters = glium::DrawParameters {
+		blend: Blend::alpha_blending(),
+		..glium::DrawParameters::default()
+	};
 
 	// Program loop
 	events_loop.run(move |event, _, control_flow| {
@@ -49,7 +53,7 @@ fn main() {
 			glutin::event::Event::MainEventsCleared => {
 				// Get frame for drawing on
 				let mut frame = display.draw();
-				frame.clear_color(0.5, 0., 0., 0.);
+				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				let data = &[
 					Vertex {
@@ -62,6 +66,18 @@ fn main() {
 					},
 					Vertex {
 						position: [0., 1.],
+						texture_position: [0., 1.]
+					},
+					Vertex {
+						position: [0.1, 0.1],
+						texture_position: [0., 0.]
+					},
+					Vertex {
+						position: [1.1, 0.1],
+						texture_position: [1., 0.]
+					},
+					Vertex {
+						position: [0.1, 1.1],
 						texture_position: [0., 1.]
 					},
 				];
@@ -78,7 +94,7 @@ fn main() {
 					],
 					texture_sampler: uniforms::Sampler(&texture, behavior),
 				};
-				frame.draw(&vertex_buffer, &indices, &program, &uniforms, &glium::DrawParameters::default()).unwrap();
+				frame.draw(&vertex_buffer, &indices, &program, &uniforms, &draw_parameters).unwrap();
 				frame.finish().unwrap();
 				glutin::event_loop::ControlFlow::Poll
 			}
