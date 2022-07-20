@@ -88,21 +88,21 @@ fn main() {
 
 	// Program loop
 	events_loop.run(move |event, _, control_flow| {
-		*control_flow = match event {
+		*control_flow = glutin::event_loop::ControlFlow::Poll;
+		match event {
 			glutin::event::Event::WindowEvent { event, .. } => match event {
-				event::WindowEvent::CloseRequested => glutin::event_loop::ControlFlow::Exit,
+				// On exit button press
+				event::WindowEvent::CloseRequested => *control_flow = glutin::event_loop::ControlFlow::Exit,
+				// On scroll wheel scrool
 				event::WindowEvent::MouseWheel { device_id: _, delta, phase: _, ..} => {
-					//println!("{:?}", delta);
 					match delta {
 						event::MouseScrollDelta::LineDelta(_, y) => {
 							zoom_level = (zoom_level - (y as i8)).clamp(-4, 4);
-							//println!("{}", (2.0f32).powi(-(zoom_level as i32)))
-							//println!("{}", zoom_level);
 						},
 						_ => {}
 					}
-					glutin::event_loop::ControlFlow::Poll
 				}
+				// On cursor move
 				event::WindowEvent::CursorMoved { device_id: _, position, .. } => {
 					let last_cursor_x = cursor_x;
 					let last_cursor_y = cursor_y;
@@ -111,24 +111,20 @@ fn main() {
 					let delta_x = (cursor_x as i16) - (last_cursor_x as i16);
 					let delta_y = (cursor_y as i16) - (last_cursor_y as i16);
 
-					//println!("{}", is_right_clicking);
+					// If right clicking then pan camera
 					if is_right_clicking {
 						let zoom = (2.0f32).powi(-(zoom_level as i32));
 						scroll_x = (scroll_x - (delta_x as f32) / zoom).clamp(0., 4096.);
 						scroll_y = (scroll_y - (delta_y as f32) / zoom).clamp(0., 4096.);
-						//println!("{}, {}", scroll_x, scroll_y);
 					}
-					//println!("{}, {}", delta_x, delta_y);
-					glutin::event_loop::ControlFlow::Poll
 				}
+				// Window resize
 				event::WindowEvent::Resized(size) => {
 					window_width = size.width as u16;
 					window_height = size.height as u16;
-					//println!("{}, {}", window_width, window_height);
-					glutin::event_loop::ControlFlow::Poll
 				}
+				// Mouse click
 				event::WindowEvent::MouseInput { device_id: _, state, button, .. } => {
-					//println!("{:?}, {:?}", button, state);
 					let button_state: &mut bool = match button {
 						event::MouseButton::Left => &mut is_left_clicking,
 						event::MouseButton::Middle => &mut is_middle_clicking,
@@ -139,21 +135,28 @@ fn main() {
 						event::ElementState::Pressed => *button_state = true,
 						event::ElementState::Released => *button_state = false
 					}
-					//println!("{}", *button_state);
-					glutin::event_loop::ControlFlow::Poll
 				}
-				_ => glutin::event_loop::ControlFlow::Poll
+				// Keyboard keypress
+				event::WindowEvent::KeyboardInput { device_id: _, input, is_synthetic: _ } => {
+					// Toggle fullscreen if F11 is pressed
+					if matches!(input.virtual_keycode.unwrap(), event::VirtualKeyCode::F11) && matches!(input.state, event::ElementState::Released) {
+						let is_fullscreen = !matches!(display.gl_window().window().fullscreen(), None);
+						display.gl_window().window().set_fullscreen(match is_fullscreen {
+							true => None,
+							false => Some(window::Fullscreen::Borderless(None))
+						});
+					}
+				}
+				_ => {}
 			},
 
 			// Draw
 			glutin::event::Event::MainEventsCleared => {
-				//scroll_x = ((frame_counter as f32) / 100.0f32 * PI).cos();
-				//scroll_y = ((frame_counter as f32) / 100.0f32 * PI).sin();
-
 				// Get frame for drawing on
 				let mut frame = display.draw();
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
+				// Get tris for each tile
 				let mut data: Vec<Vertex> = Vec::new();
 				for x in 0..256u16 {
 					for y in 0..256u16 {
@@ -161,7 +164,7 @@ fn main() {
 					}
 				}
 
-				// Draw
+				// Draw tris
 				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &data).unwrap();
 				let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 				let zoom = (2.0f32).powi(-(zoom_level as i32)) / ((window_height as f32) / 2.);
@@ -177,13 +180,11 @@ fn main() {
 				};
 				frame.draw(&vertex_buffer, &indices, &program, &uniforms, &draw_parameters).unwrap();
 				frame.finish().unwrap();
+				// End frame
 				frame_counter = frame_counter.wrapping_add(1);
-				glutin::event_loop::ControlFlow::Poll
 			}
 
-			_ => {
-				glutin::event_loop::ControlFlow::Poll
-			}
+			_ => {}
 		}
 	});
 }
