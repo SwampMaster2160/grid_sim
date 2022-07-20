@@ -1,61 +1,25 @@
 use glium::glutin::event;
 use glium::{self, uniforms, Blend};
-use glium::{glutin, glutin::{event_loop, window, dpi}, texture, Surface};
+use glium::{glutin, glutin::{event_loop, window, dpi}, Surface};
 use std::io::Cursor;
-
-#[derive(Copy, Clone)]
-struct Vertex {
-    position: [f32; 2],
-    texture_position: [f32; 2],
-}
-
-fn generate_tile(x: u16, y: u16) -> [Vertex; 6] {
-	let x_start = (x * 16) as f32;
-	let x_end = ((x + 1) * 16) as f32;
-	let y_start = (y * 16) as f32;
-	let y_end = ((y + 1) * 16) as f32;
-	[Vertex {
-		position: [x_start, y_start],
-		texture_position: [0., 1.]
-	},
-	Vertex {
-		position: [x_end, y_start],
-		texture_position: [1., 1.]
-	},
-	Vertex {
-		position: [x_start, y_end],
-		texture_position: [0., 0.]
-	},
-	Vertex {
-		position: [x_end, y_start],
-		texture_position: [1., 1.]
-	},
-	Vertex {
-		position: [x_end, y_end],
-		texture_position: [1., 0.]
-	},
-	Vertex {
-		position: [x_start, y_end],
-		texture_position: [0., 0.]
-	}]
-}
-
-glium::implement_vertex!(Vertex, position, texture_position);
+mod world;
+mod vertex;
+mod texture;
 
 fn main() {
 	// Create window
-    let events_loop = event_loop::EventLoop::new();
-    let window_builder = window::WindowBuilder::new()
-        .with_inner_size(dpi::LogicalSize::new(640., 480.)).with_title("Grid Sim");
-    let context_builder = glutin::ContextBuilder::new();
-    let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
+	let events_loop = event_loop::EventLoop::new();
+	let window_builder = window::WindowBuilder::new()
+		.with_inner_size(dpi::LogicalSize::new(640., 480.)).with_title("Grid Sim");
+	let context_builder = glutin::ContextBuilder::new();
+	let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
 
 	// Create texture
-	let image = image::load(Cursor::new(&include_bytes!("image.png")),
-                        image::ImageFormat::Png).unwrap().to_rgba8();
+	let image = image::load(Cursor::new(&include_bytes!("textures.png")),
+						image::ImageFormat::Png).unwrap().to_rgba8();
 	let image_dimensions = image.dimensions();
-	let image = texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-	let texture = texture::SrgbTexture2d::new(&display, image).unwrap();
+	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+	let texture = glium::texture::SrgbTexture2d::new(&display, image).unwrap();
 
 	// Create program
 	let vertex_shader = include_str!("vertex_shader.glsl");
@@ -85,6 +49,9 @@ fn main() {
 	let mut is_left_clicking = false;
 	let mut is_middle_clicking = false;
 	let mut is_right_clicking = false;
+
+	// World
+	let world = world::World::new();
 
 	// Program loop
 	events_loop.run(move |event, _, control_flow| {
@@ -157,15 +124,10 @@ fn main() {
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				// Get tris for each tile
-				let mut data: Vec<Vertex> = Vec::new();
-				for x in 0..256u16 {
-					for y in 0..256u16 {
-						data.extend(generate_tile(x, y));
-					}
-				}
+				let world_tris = world.render();
 
 				// Draw tris
-				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &data).unwrap();
+				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();
 				let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 				let zoom = (2.0f32).powi(-(zoom_level as i32)) / ((window_height as f32) / 2.);
 				let aspect_ratio = (window_width as f32) / (window_height as f32);
