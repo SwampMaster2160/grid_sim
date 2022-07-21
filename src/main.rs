@@ -5,6 +5,7 @@ use std::io::Cursor;
 mod world;
 mod vertex;
 mod texture;
+mod tile;
 
 fn main() {
 	// Create window
@@ -50,8 +51,11 @@ fn main() {
 	let mut is_middle_clicking = false;
 	let mut is_right_clicking = false;
 
+	let mut cursor_world_x = 0;
+	let mut cursor_world_y = 0;
+
 	// World
-	let world = world::World::new();
+	let mut world = world::World::new();
 
 	// Program loop
 	events_loop.run(move |event, _, control_flow| {
@@ -64,7 +68,7 @@ fn main() {
 				event::WindowEvent::MouseWheel { device_id: _, delta, phase: _, ..} => {
 					match delta {
 						event::MouseScrollDelta::LineDelta(_, y) => {
-							zoom_level = (zoom_level - (y as i8)).clamp(-4, 4);
+							zoom_level = (zoom_level - (y as i8)).clamp(-4, 3);
 						},
 						_ => {}
 					}
@@ -78,9 +82,12 @@ fn main() {
 					let delta_x = (cursor_x as i16) - (last_cursor_x as i16);
 					let delta_y = (cursor_y as i16) - (last_cursor_y as i16);
 
+					let zoom = (2.0f32).powi(-(zoom_level as i32));
+					cursor_world_x = ((scroll_x / 16.) + (((cursor_x as i32) - ((window_width as i32) / 2)) as f32) / zoom / 16.) as i32;
+					cursor_world_y = ((scroll_y / 16.) + (((cursor_y as i32) - ((window_height as i32) / 2)) as f32) / zoom / 16.) as i32;
+
 					// If right clicking then pan camera
 					if is_right_clicking {
-						let zoom = (2.0f32).powi(-(zoom_level as i32));
 						scroll_x = (scroll_x - (delta_x as f32) / zoom).clamp(0., 4096.);
 						scroll_y = (scroll_y - (delta_y as f32) / zoom).clamp(0., 4096.);
 					}
@@ -101,6 +108,10 @@ fn main() {
 					match state {
 						event::ElementState::Pressed => *button_state = true,
 						event::ElementState::Released => *button_state = false
+					}
+
+					if matches!(button, event::MouseButton::Left) {
+						world.build(cursor_world_x, cursor_world_y);
 					}
 				}
 				// Keyboard keypress
@@ -124,7 +135,7 @@ fn main() {
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				// Get tris for each tile
-				let world_tris = world.render();
+				let world_tris = world.render(cursor_world_x, cursor_world_y);
 
 				// Draw tris
 				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();

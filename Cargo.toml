@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 glium = "^0.31.0"
 image = "^0.24.2"
+ndarray = "^0.15.4"

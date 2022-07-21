@@ -6,6 +6,7 @@ pub enum Texture {
 	Grass,
 	Water,
 	Bricks,
+	Select,
 	BlueThing,
 	RedThing,
 	YellowThing,
@@ -15,10 +16,11 @@ pub enum Texture {
 impl Texture {
 	pub fn get_texture_id(self) -> u8 {
 		match self {
-			Self::Test => 0,
-			Self::Grass => 1,
-			Self::Water => 2,
-			Self::Bricks => 3,
+			Self::Test => 0x00,
+			Self::Grass => 0x01,
+			Self::Water => 0x02,
+			Self::Bricks => 0x03,
+			Self::Select => 0x04,
 			Self::BlueThing => 0x0F,
     		Self::RedThing => 0x10,
 			Self::YellowThing => 0xF0,
@@ -26,7 +28,7 @@ impl Texture {
 		}
 	}
 
-	pub fn generate_tile_tris(self, x: u16, y: u16) -> [vertex::Vertex; 6] {
+	pub fn generate_tile_tris(self, x: i32, y: i32) -> [vertex::Vertex; 6] {
 		let x_start = (x * 16) as f32;
 		let x_end = ((x + 1) * 16) as f32;
 		let y_start = (y * 16) as f32;
