@@ -51,9 +51,6 @@ fn main() {
 	let mut is_middle_clicking = false;
 	let mut is_right_clicking = false;
 
-	let mut cursor_world_x = 0;
-	let mut cursor_world_y = 0;
-
 	// World
 	let mut world = world::World::new();
 
@@ -83,9 +80,10 @@ fn main() {
 					let delta_y = (cursor_y as i16) - (last_cursor_y as i16);
 
 					let zoom = (2.0f32).powi(-(zoom_level as i32));
-					cursor_world_x = ((scroll_x / 16.) + (((cursor_x as i32) - ((window_width as i32) / 2)) as f32) / zoom / 16.) as i32;
-					cursor_world_y = ((scroll_y / 16.) + (((cursor_y as i32) - ((window_height as i32) / 2)) as f32) / zoom / 16.) as i32;
+					let cursor_world_x = ((scroll_x / 16.) + (((cursor_x as i32) - ((window_width as i32) / 2)) as f32) / zoom / 16.) as i32;
+					let cursor_world_y = ((scroll_y / 16.) + (((cursor_y as i32) - ((window_height as i32) / 2)) as f32) / zoom / 16.) as i32;
 
+					world.set_cursor_pos(cursor_world_x, cursor_world_y);
 					// If right clicking then pan camera
 					if is_right_clicking {
 						scroll_x = (scroll_x - (delta_x as f32) / zoom).clamp(0., 4096.);
@@ -111,7 +109,10 @@ fn main() {
 					}
 
 					if matches!(button, event::MouseButton::Left) {
-						world.build(cursor_world_x, cursor_world_y);
+						match state {
+							event::ElementState::Released => world.build(),
+        					event::ElementState::Pressed => world.set_build_start()
+						}
 					}
 				}
 				// Keyboard keypress
@@ -135,7 +136,7 @@ fn main() {
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				// Get tris for each tile
-				let world_tris = world.render(cursor_world_x, cursor_world_y);
+				let world_tris = world.render();
 
 				// Draw tris
 				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();

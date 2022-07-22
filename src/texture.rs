@@ -28,7 +28,7 @@ impl Texture {
 		}
 	}
 
-	pub fn generate_tile_tris(self, x: i32, y: i32) -> [vertex::Vertex; 6] {
+	pub fn generate_tile_tris(self, x: u16, y: u16) -> [vertex::Vertex; 6] {
 		let x_start = (x * 16) as f32;
 		let x_end = ((x + 1) * 16) as f32;
 		let y_start = (y * 16) as f32;

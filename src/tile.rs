@@ -29,6 +29,6 @@ impl Tile {
 	}
 
 	pub fn render(&self, x: u16, y: u16) -> Vec<vertex::Vertex> {
-		self.ground.texture().generate_tile_tris(x as i32, y as i32).to_vec()
+		self.ground.texture().generate_tile_tris(x, y).to_vec()
 	}
 }
