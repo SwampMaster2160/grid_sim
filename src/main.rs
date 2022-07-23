@@ -117,8 +117,12 @@ fn main() {
 				}
 				// Keyboard keypress
 				event::WindowEvent::KeyboardInput { device_id: _, input, is_synthetic: _ } => {
+					let keycode = match input.virtual_keycode {
+						Some(valid) => valid,
+						None => return
+					};
 					// Toggle fullscreen if F11 is pressed
-					if matches!(input.virtual_keycode.unwrap(), event::VirtualKeyCode::F11) && matches!(input.state, event::ElementState::Released) {
+					if matches!(keycode, event::VirtualKeyCode::F11) && matches!(input.state, event::ElementState::Released) {
 						let is_fullscreen = !matches!(display.gl_window().window().fullscreen(), None);
 						display.gl_window().window().set_fullscreen(match is_fullscreen {
 							true => None,

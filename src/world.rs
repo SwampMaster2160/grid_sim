@@ -42,6 +42,7 @@ impl World {
 	pub fn build(&mut self) {
 		let mut new_tile = tile::Tile::new();
 		new_tile.ground = tile::Ground::Bricks;
+		new_tile.cover = tile::Cover::Tree;
 		*self.tiles.get_mut([self.build_end_x as usize, self.build_end_y as usize]).unwrap() = new_tile;
 	}
 
