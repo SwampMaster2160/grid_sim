@@ -1,3 +1,4 @@
+use glium::glutin::event;
 use ndarray;
 
 use super::vertex;
@@ -59,5 +60,17 @@ impl World {
 		}
 		data.extend(texture::Texture::Select.generate_tile_tris(self.build_end_x, self.build_end_y));
 		data
+	}
+
+	pub fn keystroke(&mut self, keycode: event::VirtualKeyCode) {
+		match keycode {
+			event::VirtualKeyCode::G => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Grass),
+			event::VirtualKeyCode::W => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Water),
+			event::VirtualKeyCode::B => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks),
+			event::VirtualKeyCode::D => self.interaction = interaction::TileInteraction::DemolishCover,
+			event::VirtualKeyCode::T => self.interaction = interaction::TileInteraction::BuildCover(tile::Cover::Tree),
+			event::VirtualKeyCode::H => self.interaction = interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding),
+			_ => {}
+		}
 	}
 }

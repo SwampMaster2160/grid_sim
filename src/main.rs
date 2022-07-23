@@ -13,7 +13,7 @@ fn main() {
 	let events_loop = event_loop::EventLoop::new();
 	let window_builder = window::WindowBuilder::new()
 		.with_inner_size(dpi::LogicalSize::new(640., 480.)).with_title("Grid Sim");
-	let context_builder = glutin::ContextBuilder::new();
+	let context_builder = glutin::ContextBuilder::new().with_vsync(true);
 	let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
 
 	// Create texture
@@ -129,6 +129,9 @@ fn main() {
 							true => None,
 							false => Some(window::Fullscreen::Borderless(None))
 						});
+					}
+					else {
+						world.keystroke(keycode);
 					}
 				}
 				_ => {}
