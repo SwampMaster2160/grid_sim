@@ -6,6 +6,7 @@ mod world;
 mod vertex;
 mod texture;
 mod tile;
+mod interaction;
 
 fn main() {
 	// Create window
@@ -110,7 +111,7 @@ fn main() {
 
 					if matches!(button, event::MouseButton::Left) {
 						match state {
-							event::ElementState::Released => world.build(),
+							event::ElementState::Released => world.interact(),
         					event::ElementState::Pressed => world.set_build_start()
 						}
 					}
