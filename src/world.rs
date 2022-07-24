@@ -3,25 +3,27 @@ use ndarray;
 
 use super::vertex;
 use super::tile;
-use super::texture;
 use super::interaction;
 
 pub struct World {
-	tiles: ndarray::Array2<tile::Tile>,
+	pub tiles: ndarray::Array2<tile::Tile>,
 
-	build_start_x: u16,
-	build_start_y: u16,
-	build_end_x: u16,
-	build_end_y: u16,
+	pub build_start_x: u16,
+	pub build_start_y: u16,
+	pub build_end_x: u16,
+	pub build_end_y: u16,
+	is_clicking: bool,
 
-	interaction: interaction::TileInteraction,
+	interaction: interaction::InteractionShape,
 }
 
 impl World {
 	pub fn new() -> Self {
 		Self {
 			tiles: ndarray::Array2::from_elem([256, 256], tile::Tile::new()),
-			build_start_x: 0, build_start_y: 0, build_end_x: 0, build_end_y: 0, interaction: interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks)
+			build_start_x: 0, build_start_y: 0, build_end_x: 0, build_end_y: 0,
+			interaction: interaction::InteractionShape::Dot(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks)),
+			is_clicking: false
 		}
 	}
 
@@ -41,14 +43,12 @@ impl World {
 	pub fn set_build_start(&mut self) {
 		self.build_start_x = self.build_end_x;
 		self.build_start_y = self.build_end_y;
+		self.is_clicking = true;
 	}
 
 	pub fn interact(&mut self) {
-		/*let mut new_tile = tile::Tile::new();
-		new_tile.ground = tile::Ground::Bricks;
-		new_tile.cover = tile::Cover::Tree;
-		*self.tiles.get_mut([self.build_end_x as usize, self.build_end_y as usize]).unwrap() = new_tile;*/
-		self.interaction.interact(&mut self.tiles[[self.build_end_x as usize, self.build_end_y as usize]]);
+		self.interaction.interact(&mut self.tiles, self.build_start_x, self.build_start_y, self.build_end_x, self.build_end_y);
+		self.is_clicking = false;
 	}
 
 	pub fn render(&self) -> Vec<vertex::Vertex> {
@@ -58,18 +58,18 @@ impl World {
 				data.extend(tile.render(x as u16, y as u16));
 			}
 		}
-		data.extend(texture::Texture::Select.generate_tile_tris(self.build_end_x, self.build_end_y));
+		data.extend(self.interaction.generate_select_tris(&self.tiles, self.build_start_x, self.build_start_y, self.build_end_x, self.build_end_y, self.is_clicking));
 		data
 	}
 
 	pub fn keystroke(&mut self, keycode: event::VirtualKeyCode) {
 		match keycode {
-			event::VirtualKeyCode::G => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Grass),
-			event::VirtualKeyCode::W => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Water),
-			event::VirtualKeyCode::B => self.interaction = interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks),
-			event::VirtualKeyCode::D => self.interaction = interaction::TileInteraction::DemolishCover,
-			event::VirtualKeyCode::T => self.interaction = interaction::TileInteraction::BuildCover(tile::Cover::Tree),
-			event::VirtualKeyCode::H => self.interaction = interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding),
+			event::VirtualKeyCode::G => self.interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Grass)),
+			event::VirtualKeyCode::W => self.interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Water)),
+			event::VirtualKeyCode::B => self.interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks)),
+			event::VirtualKeyCode::D => self.interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::DemolishCover),
+			event::VirtualKeyCode::T => self.interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::BuildCover(tile::Cover::Tree)),
+			event::VirtualKeyCode::H => self.interaction = interaction::InteractionShape::Dot(interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding)),
 			_ => {}
 		}
 	}

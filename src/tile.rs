@@ -5,7 +5,7 @@ impl Ground {
 
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Ground {
 	Grass,
 	Water,
