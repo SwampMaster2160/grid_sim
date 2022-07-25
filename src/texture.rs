@@ -38,11 +38,11 @@ impl Texture {
 		}
 	}
 
-	pub fn generate_tile_tris(self, x: u16, y: u16) -> [vertex::Vertex; 6] {
-		let x_start = (x * 16) as f32;
-		let x_end = ((x + 1) * 16) as f32;
-		let y_start = (y * 16) as f32;
-		let y_end = ((y + 1) * 16) as f32;
+	pub fn generate_tile_tris(self, pos: [u16; 2]) -> [vertex::Vertex; 6] {
+		let x_start = (pos[0] * 16) as f32;
+		let x_end = ((pos[0] + 1) * 16) as f32;
+		let y_start = (pos[1] * 16) as f32;
+		let y_end = ((pos[1] + 1) * 16) as f32;
 
 		let texture_id = self.get_texture_id();
 		let texture_column = texture_id % 16;

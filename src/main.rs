@@ -7,6 +7,7 @@ mod vertex;
 mod texture;
 mod tile;
 mod interaction;
+mod mouse;
 
 fn main() {
 	// Create window
@@ -43,14 +44,12 @@ fn main() {
 	let mut scroll_x = 0.0f32;
 	let mut scroll_y = 0.0f32;
 	let mut zoom_level = 0i8;
-	let mut frame_counter = 0u64;
 	let mut cursor_x = 0u16;
 	let mut cursor_y = 0u16;
 	let mut window_width = 0u16;
 	let mut window_height = 0u16;
-	let mut is_left_clicking = false;
-	let mut is_middle_clicking = false;
-	let mut is_right_clicking = false;
+	let mut mouse = mouse::Mouse{ pos: [0u16; 2], click_start: [0u16; 2], is_left_clicking: false, is_middle_clicking: false, is_right_clicking: false };
+	let mut interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks));
 
 	// World
 	let mut world = world::World::new();
@@ -84,9 +83,10 @@ fn main() {
 					let cursor_world_x = ((scroll_x / 16.) + (((cursor_x as i32) - ((window_width as i32) / 2)) as f32) / zoom / 16.) as i32;
 					let cursor_world_y = ((scroll_y / 16.) + (((cursor_y as i32) - ((window_height as i32) / 2)) as f32) / zoom / 16.) as i32;
 
-					world.set_cursor_pos(cursor_world_x, cursor_world_y);
+					//world.set_cursor_pos(cursor_world_x, cursor_world_y);
+					mouse.set_pos([cursor_world_x, cursor_world_y], &world);
 					// If right clicking then pan camera
-					if is_right_clicking {
+					if mouse.is_right_clicking {
 						scroll_x = (scroll_x - (delta_x as f32) / zoom).clamp(0., 4096.);
 						scroll_y = (scroll_y - (delta_y as f32) / zoom).clamp(0., 4096.);
 					}
@@ -99,10 +99,10 @@ fn main() {
 				// Mouse click
 				event::WindowEvent::MouseInput { device_id: _, state, button, .. } => {
 					let button_state: &mut bool = match button {
-						event::MouseButton::Left => &mut is_left_clicking,
-						event::MouseButton::Middle => &mut is_middle_clicking,
-						event::MouseButton::Right => &mut is_right_clicking,
-						_ => &mut is_left_clicking
+						event::MouseButton::Left => &mut mouse.is_left_clicking,
+						event::MouseButton::Middle => &mut mouse.is_middle_clicking,
+						event::MouseButton::Right => &mut mouse.is_right_clicking,
+						_ => &mut mouse.is_left_clicking
 					};
 					match state {
 						event::ElementState::Pressed => *button_state = true,
@@ -111,8 +111,8 @@ fn main() {
 
 					if matches!(button, event::MouseButton::Left) {
 						match state {
-							event::ElementState::Released => world.interact(),
-        					event::ElementState::Pressed => world.set_build_start()
+							event::ElementState::Released => world.interact(&interaction, &mouse),
+        					event::ElementState::Pressed => mouse.set_click_start(),//world.set_build_start()
 						}
 					}
 				}
@@ -131,7 +131,15 @@ fn main() {
 						});
 					}
 					else {
-						world.keystroke(keycode);
+						match keycode {
+							event::VirtualKeyCode::G => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Grass)),
+							event::VirtualKeyCode::W => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Water)),
+							event::VirtualKeyCode::B => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks)),
+							event::VirtualKeyCode::D => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::DemolishCover),
+							event::VirtualKeyCode::T => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::BuildCover(tile::Cover::Tree)),
+							event::VirtualKeyCode::H => interaction = interaction::InteractionShape::Dot(interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding)),
+							_ => {}
+						}
 					}
 				}
 				_ => {}
@@ -144,7 +152,7 @@ fn main() {
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				// Get tris for each tile
-				let world_tris = world.render();
+				let world_tris = world.render(&interaction, &mouse);
 
 				// Draw tris
 				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();
@@ -162,10 +170,7 @@ fn main() {
 				};
 				frame.draw(&vertex_buffer, &indices, &program, &uniforms, &draw_parameters).unwrap();
 				frame.finish().unwrap();
-				// End frame
-				frame_counter = frame_counter.wrapping_add(1);
 			}
-
 			_ => {}
 		}
 	});

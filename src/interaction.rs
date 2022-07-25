@@ -1,6 +1,7 @@
-use crate::{world, texture, vertex};
+use crate::{texture, vertex};
 
 use super::tile;
+use super::mouse;
 
 pub enum TileInteraction {
 	ReplaceGround(tile::Ground),
@@ -21,25 +22,25 @@ impl TileInteraction {
 		}
 	}
 
-	pub fn generate_select_tris(&self, tile: &tile::Tile, x: u16, y: u16) -> [vertex::Vertex; 6] {
+	pub fn generate_select_tris(&self, tile: &tile::Tile, pos: [u16; 2]) -> [vertex::Vertex; 6] {
 		match self {
 			TileInteraction::ReplaceGround(replace_with) => {
 				match *replace_with == tile.ground {
 					false => texture::Texture::SelectBuildable,
 					true => texture::Texture::SelectUnbuildable,
-				}.generate_tile_tris(x, y)
+				}.generate_tile_tris(pos)
 			}
 			TileInteraction::BuildCover(_) => {
 				match tile.cover {
 					tile::Cover::None => texture::Texture::SelectBuildable,
 					_ => texture::Texture::SelectUnbuildable,
-				}.generate_tile_tris(x, y)
+				}.generate_tile_tris(pos)
 			},
 			TileInteraction::DemolishCover => {
 				match tile.cover {
 					tile::Cover::None => texture::Texture::SelectUnbuildable,
 					_ => texture::Texture::SelectDestroy,
-				}.generate_tile_tris(x, y)
+				}.generate_tile_tris(pos)
 			}
 		}
 	}
@@ -51,14 +52,14 @@ pub enum InteractionShape {
 }
 
 impl InteractionShape {
-	pub fn interact(&self, tiles: &mut ndarray::Array2<tile::Tile>, build_start_x: u16, build_start_y: u16, build_end_x: u16, build_end_y: u16) {
+	pub fn interact(&self, tiles: &mut ndarray::Array2<tile::Tile>, mouse: &mouse::Mouse) {
 		match self {
 			Self::Dot(tile_interaction) => {
-				tile_interaction.interact(&mut tiles[[build_end_x as usize, build_end_y as usize]]);
+				tile_interaction.interact(&mut tiles[[mouse.pos[0] as usize, mouse.pos[1] as usize]]);
 			}
 			Self::Rectangle(tile_interaction) => {
-				for y in build_start_y.min(build_end_y)..=build_start_y.max(build_end_y) {
-					for x in build_start_x.min(build_end_x)..=build_start_x.max(build_end_x) {
+				for y in mouse.click_start[1].min(mouse.pos[1])..=mouse.click_start[1].max(mouse.pos[1]) {
+					for x in mouse.click_start[0].min(mouse.pos[0])..=mouse.click_start[0].max(mouse.pos[0]) {
 						tile_interaction.interact(&mut tiles[[x as usize, y as usize]]);
 					}
 				}
@@ -66,21 +67,21 @@ impl InteractionShape {
 		}
 	}
 
-	pub fn generate_select_tris(&self, tiles: &ndarray::Array2<tile::Tile>, build_start_x: u16, build_start_y: u16, build_end_x: u16, build_end_y: u16, is_clicking: bool) -> Vec<vertex::Vertex> {
-		match (self, is_clicking) {
+	pub fn generate_select_tris(&self, tiles: &ndarray::Array2<tile::Tile>, mouse: &mouse::Mouse) -> Vec<vertex::Vertex> {
+		match (self, mouse.is_left_clicking) {
 			(Self::Rectangle(interaction), true) => {
 				let mut tris: Vec<vertex::Vertex> = Vec::new();
-				for y in build_start_y.min(build_end_y)..=build_start_y.max(build_end_y) {
-					for x in build_start_x.min(build_end_x)..=build_start_x.max(build_end_x) {
-						tris.extend(interaction.generate_select_tris(&tiles[[x as usize, y as usize]], x, y));
+				for y in mouse.click_start[1].min(mouse.pos[1])..=mouse.click_start[1].max(mouse.pos[1]) {
+					for x in mouse.click_start[0].min(mouse.pos[0])..=mouse.click_start[0].max(mouse.pos[0]) {
+						tris.extend(interaction.generate_select_tris(&tiles[[x as usize, y as usize]], [x, y]));
 					}
 				}
 				tris
 			}
 			(Self::Dot(interaction) | Self::Rectangle(interaction), _) => {
-				interaction.generate_select_tris(&tiles[[build_end_x as usize, build_end_y as usize]], build_end_x, build_end_y).to_vec()
+				interaction.generate_select_tris(&tiles[[mouse.pos[0] as usize, mouse.pos[1] as usize]], mouse.pos).to_vec()
 			}
-			_ => texture::Texture::Select.generate_tile_tris(build_end_x, build_end_y).to_vec()
+			//_ => texture::Texture::Select.generate_tile_tris(build_end_x, build_end_y).to_vec()
 		}
 	}
 }
