@@ -8,6 +8,7 @@ mod texture;
 mod tile;
 mod interaction;
 mod mouse;
+mod gui;
 
 fn main() {
 	// Create window
@@ -48,11 +49,12 @@ fn main() {
 	let mut cursor_y = 0u16;
 	let mut window_width = 0u16;
 	let mut window_height = 0u16;
-	let mut mouse = mouse::Mouse{ pos: [0u16; 2], click_start: [0u16; 2], is_left_clicking: false, is_middle_clicking: false, is_right_clicking: false };
-	let mut interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks));
 
-	// World
+	// Structs
 	let mut world = world::World::new();
+	let mut interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks));
+	let mut mouse = mouse::Mouse{ pos: [0u16; 2], click_start: [0u16; 2], is_left_clicking: false, is_middle_clicking: false, is_right_clicking: false, gui_pos: [0; 2] };
+	let mut gui = gui::GUI::new();
 
 	// Program loop
 	events_loop.run(move |event, _, control_flow| {
@@ -83,8 +85,11 @@ fn main() {
 					let cursor_world_x = ((scroll_x / 16.) + (((cursor_x as i32) - ((window_width as i32) / 2)) as f32) / zoom / 16.) as i32;
 					let cursor_world_y = ((scroll_y / 16.) + (((cursor_y as i32) - ((window_height as i32) / 2)) as f32) / zoom / 16.) as i32;
 
-					//world.set_cursor_pos(cursor_world_x, cursor_world_y);
-					mouse.set_pos([cursor_world_x, cursor_world_y], &world);
+					let width_excess = window_width as i32 - (window_height as i32);
+					let cursor_gui_x = ((cursor_x as i32 - (width_excess as i32) / 2) as f32 * 16. / ((window_height as i32) as f32)).clamp(0., 16.) as u8;
+					let cursor_gui_y = (cursor_y as f32 * 16. / (window_height as f32)).clamp(0., 16.) as u8;
+
+					mouse.set_pos([cursor_world_x, cursor_world_y], [cursor_gui_x, cursor_gui_y], &world);
 					// If right clicking then pan camera
 					if mouse.is_right_clicking {
 						scroll_x = (scroll_x - (delta_x as f32) / zoom).clamp(0., 4096.);
@@ -112,7 +117,7 @@ fn main() {
 					if matches!(button, event::MouseButton::Left) {
 						match state {
 							event::ElementState::Released => world.interact(&interaction, &mouse),
-        					event::ElementState::Pressed => mouse.set_click_start(),//world.set_build_start()
+        					event::ElementState::Pressed => mouse.set_click_start(),
 						}
 					}
 				}
@@ -154,8 +159,8 @@ fn main() {
 				// Get tris for each tile
 				let world_tris = world.render(&interaction, &mouse);
 
-				// Draw tris
-				let vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();
+				// Draw world tris
+				let world_vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();
 				let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 				let zoom = (2.0f32).powi(-(zoom_level as i32)) / ((window_height as f32) / 2.);
 				let aspect_ratio = (window_width as f32) / (window_height as f32);
@@ -168,7 +173,24 @@ fn main() {
 					],
 					texture_sampler: uniforms::Sampler(&texture, behavior),
 				};
-				frame.draw(&vertex_buffer, &indices, &program, &uniforms, &draw_parameters).unwrap();
+				frame.draw(&world_vertex_buffer, &indices, &program, &uniforms, &draw_parameters).unwrap();
+
+				// Get GUI tris
+				let gui_tris = gui.render();
+
+				// Draw GUI tris
+				let gui_vertex_buffer = glium::vertex::VertexBuffer::new(&display, &gui_tris).unwrap();
+				let gui_uniforms = glium::uniform! {
+					matrix: [
+						[1. / 128. / aspect_ratio, 0., 0., 0.],
+						[0., -1. / 128., 0., 0.],
+						[0., 0., 0., 0.],
+						[-1. / aspect_ratio, 1., 0., 1.0f32],
+					],
+					texture_sampler: uniforms::Sampler(&texture, behavior),
+				};
+				frame.draw(&gui_vertex_buffer, &indices, &program, &gui_uniforms, &draw_parameters).unwrap();
+
 				frame.finish().unwrap();
 			}
 			_ => {}
