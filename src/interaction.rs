@@ -3,6 +3,7 @@ use crate::{texture, vertex};
 use super::tile;
 use super::mouse;
 
+#[derive(Copy, Clone)]
 pub enum TileInteraction {
 	ReplaceGround(tile::Ground),
 	BuildCover(tile::Cover),
@@ -46,6 +47,7 @@ impl TileInteraction {
 	}
 }
 
+#[derive(Copy, Clone)]
 pub enum InteractionShape {
 	Dot(TileInteraction),
 	Rectangle(TileInteraction),

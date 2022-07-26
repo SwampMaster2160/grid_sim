@@ -116,7 +116,12 @@ fn main() {
 
 					if matches!(button, event::MouseButton::Left) {
 						match state {
-							event::ElementState::Released => world.interact(&interaction, &mouse),
+							event::ElementState::Released => {
+								match gui.is_open {
+									true => gui.click(&mouse, &mut interaction),
+									false => world.interact(&interaction, &mouse),
+								}
+							},
         					event::ElementState::Pressed => mouse.set_click_start(),
 						}
 					}
@@ -127,22 +132,17 @@ fn main() {
 						Some(valid) => valid,
 						None => return
 					};
-					// Toggle fullscreen if F11 is pressed
-					if matches!(keycode, event::VirtualKeyCode::F11) && matches!(input.state, event::ElementState::Released) {
-						let is_fullscreen = !matches!(display.gl_window().window().fullscreen(), None);
-						display.gl_window().window().set_fullscreen(match is_fullscreen {
-							true => None,
-							false => Some(window::Fullscreen::Borderless(None))
-						});
-					}
-					else {
+					// When pressed
+					if matches!(input.state, event::ElementState::Released) {
 						match keycode {
-							event::VirtualKeyCode::G => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Grass)),
-							event::VirtualKeyCode::W => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Water)),
-							event::VirtualKeyCode::B => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Bricks)),
-							event::VirtualKeyCode::D => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::DemolishCover),
-							event::VirtualKeyCode::T => interaction = interaction::InteractionShape::Rectangle(interaction::TileInteraction::BuildCover(tile::Cover::Tree)),
-							event::VirtualKeyCode::H => interaction = interaction::InteractionShape::Dot(interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding)),
+							event::VirtualKeyCode::F11 => {
+								let is_fullscreen = !matches!(display.gl_window().window().fullscreen(), None);
+								display.gl_window().window().set_fullscreen(match is_fullscreen {
+									true => None,
+									false => Some(window::Fullscreen::Borderless(None))
+								});
+							}
+							event::VirtualKeyCode::B => gui.is_open = !gui.is_open,
 							_ => {}
 						}
 					}
@@ -157,7 +157,7 @@ fn main() {
 				frame.clear_color(0.2, 0.8, 1., 0.);
 
 				// Get tris for each tile
-				let world_tris = world.render(&interaction, &mouse);
+				let world_tris = world.render(&interaction, &mouse, gui.is_open);
 
 				// Draw world tris
 				let world_vertex_buffer = glium::vertex::VertexBuffer::new(&display, &world_tris).unwrap();

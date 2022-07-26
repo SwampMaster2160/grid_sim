@@ -26,14 +26,16 @@ impl World {
 		interaction.interact(&mut self.tiles, mouse);
 	}
 
-	pub fn render(&self, interaction: &interaction::InteractionShape, mouse: &mouse::Mouse) -> Vec<vertex::Vertex> {
+	pub fn render(&self, interaction: &interaction::InteractionShape, mouse: &mouse::Mouse, is_paused: bool) -> Vec<vertex::Vertex> {
 		let mut data: Vec<vertex::Vertex> = Vec::new();
 		for (y, column) in self.tiles.axis_iter(ndarray::Axis(1)).enumerate() {
 			for (x, tile) in column.iter().enumerate() {
 				data.extend(tile.render([x as u16, y as u16]));
 			}
 		}
-		data.extend(interaction.generate_select_tris(&self.tiles, mouse));
+		if !is_paused {
+			data.extend(interaction.generate_select_tris(&self.tiles, mouse));
+		}
 		data
 	}
 }
