@@ -18,6 +18,7 @@ counted_array!(const TOOLS: [Tool; _] = [
 	Tool { icon: texture::Texture::Bomb, interaction: interaction::InteractionShape::Rectangle(interaction::TileInteraction::DemolishCover) },
 	Tool { icon: texture::Texture::Tree, interaction: interaction::InteractionShape::Rectangle(interaction::TileInteraction::BuildCover(tile::Cover::Tree)) },
 	Tool { icon: texture::Texture::TestBuilding, interaction: interaction::InteractionShape::Dot(interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding)) },
+	Tool { icon: texture::Texture::Gravel, interaction: interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Gravel)) },
 ]);
 
 pub struct GUI {
@@ -33,7 +34,7 @@ impl GUI {
 		let mut tris = Vec::new();
 		if self.is_open {
 			for (index, tool) in TOOLS.iter().enumerate() {
-				tris.extend(tool.icon.generate_tile_tris([index as u16 % 8 + 4, index as u16 / 8 + 4]));
+				tris.extend(tool.icon.generate_tris([index as u16 % 8 + 4, index as u16 / 8 + 4]));
 			}
 		}
 		tris

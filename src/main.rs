@@ -9,6 +9,7 @@ mod tile;
 mod interaction;
 mod mouse;
 mod gui;
+mod direction;
 
 fn main() {
 	// Create window

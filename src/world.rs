@@ -11,7 +11,9 @@ pub struct World {
 
 impl World {
 	pub fn new() -> Self {
-		Self {tiles: ndarray::Array2::from_elem([256, 256], tile::Tile::new())}
+		let out = Self {tiles: ndarray::Array2::from_elem([256, 256], tile::Tile::new())};
+		//out.tiles[[0, 0]] = tile::Tile { ground: tile::Ground::Grass, cover: tile::Cover::Road([tile::Road::None, tile::Road::Gravel, tile::Road::None, tile::Road::None]) };
+		out
 	}
 
 	pub fn get_width(&self) -> u16 {

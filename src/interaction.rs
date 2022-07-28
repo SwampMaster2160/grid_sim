@@ -29,19 +29,19 @@ impl TileInteraction {
 				match *replace_with == tile.ground {
 					false => texture::Texture::SelectBuildable,
 					true => texture::Texture::SelectUnbuildable,
-				}.generate_tile_tris(pos)
+				}.generate_tris(pos)
 			}
 			TileInteraction::BuildCover(_) => {
 				match tile.cover {
 					tile::Cover::None => texture::Texture::SelectBuildable,
 					_ => texture::Texture::SelectUnbuildable,
-				}.generate_tile_tris(pos)
+				}.generate_tris(pos)
 			},
 			TileInteraction::DemolishCover => {
 				match tile.cover {
 					tile::Cover::None => texture::Texture::SelectUnbuildable,
 					_ => texture::Texture::SelectDestroy,
-				}.generate_tile_tris(pos)
+				}.generate_tris(pos)
 			}
 		}
 	}
