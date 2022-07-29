@@ -8,6 +8,9 @@ pub enum Ground {
 	Water,
 	Bricks,
 	Gravel,
+	LeafLitter,
+	Swamp,
+	Sand,
 }
 
 impl Ground {
@@ -17,6 +20,9 @@ impl Ground {
 			Ground::Water => texture::Texture::Water,
 			Ground::Bricks => texture::Texture::Bricks,
 			Ground::Gravel => texture::Texture::Gravel,
+			Ground::LeafLitter => texture::Texture::LeafLitter,
+			Ground::Swamp => texture::Texture::Swamp,
+			Ground::Sand => texture::Texture::Sand,
 		}
 	}
 }

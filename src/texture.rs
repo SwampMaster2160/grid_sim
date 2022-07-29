@@ -54,8 +54,10 @@ pub enum Texture {
 	SelectDestroy,
 	Bomb,
 	Gravel,
-	//GravelRoad,
 	GravelRoadGUI,
+	LeafLitter,
+	Swamp,
+	Sand,
 	//YellowThing,
 	//GreenThing
 }
@@ -75,8 +77,10 @@ impl Texture {
 			Self::SelectDestroy => 0x09,
 			Self::Bomb => 0x0A,
 			Self::Gravel => 0x0B,
-			//Self::GravelRoad => 0x0C,
 			Self::GravelRoadGUI => 0x10,
+			Self::LeafLitter => 0x11,
+			Self::Swamp => 0x12,
+			Self::Sand => 0x13,
 			//Self::YellowThing => 0xF0,
     		//Self::GreenThing => 0xFF,
 		}
