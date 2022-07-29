@@ -1,3 +1,4 @@
+use crate::direction;
 use crate::{texture, vertex};
 
 use super::tile;
@@ -51,6 +52,7 @@ impl TileInteraction {
 pub enum InteractionShape {
 	Dot(TileInteraction),
 	Rectangle(TileInteraction),
+	RoadLine(tile::Road),
 }
 
 impl InteractionShape {
@@ -64,6 +66,42 @@ impl InteractionShape {
 					for x in mouse.click_start[0].min(mouse.pos[0])..=mouse.click_start[0].max(mouse.pos[0]) {
 						tile_interaction.interact(&mut tiles[[x as usize, y as usize]]);
 					}
+				}
+			}
+			Self::RoadLine(road) => {
+				match mouse.get_line_drag_direction() {
+					direction::Direction2::NorthSouth => {
+						let x = mouse.click_start[0];
+						let min = mouse.click_start[1].min(mouse.pos[1]);
+						let max = mouse.click_start[1].max(mouse.pos[1]);
+						for y in min..=max {
+							let mut road_quarters = [tile::Road::None; 4];
+							if y != min {
+								road_quarters[0] = *road;
+							}
+							if y != max {
+								road_quarters[2] = *road;
+							}
+							let tile_interaction = TileInteraction::BuildCover(tile::Cover::Road(road_quarters));
+							tile_interaction.interact(&mut tiles[[x as usize, y as usize]]);
+						}
+					},
+					direction::Direction2::EastWest => {
+						let y = mouse.click_start[1];
+						let min = mouse.click_start[0].min(mouse.pos[0]);
+						let max = mouse.click_start[0].max(mouse.pos[0]);
+						for x in min..=max {
+							let mut road_quarters = [tile::Road::None; 4];
+							if x != min {
+								road_quarters[3] = *road;
+							}
+							if x != max {
+								road_quarters[1] = *road;
+							}
+							let tile_interaction = TileInteraction::BuildCover(tile::Cover::Road(road_quarters));
+							tile_interaction.interact(&mut tiles[[x as usize, y as usize]]);
+						}
+					},
 				}
 			}
 		}
@@ -83,7 +121,26 @@ impl InteractionShape {
 			(Self::Dot(interaction) | Self::Rectangle(interaction), _) => {
 				interaction.generate_select_tris(&tiles[[mouse.pos[0] as usize, mouse.pos[1] as usize]], mouse.pos).to_vec()
 			}
-			//_ => texture::Texture::Select.generate_tile_tris(build_end_x, build_end_y).to_vec()
+			(Self::RoadLine(_), true) => {
+				let mut tris: Vec<vertex::Vertex> = Vec::new();
+				let interaction = TileInteraction::BuildCover(tile::Cover::Road([tile::Road::None; 4]));
+				match mouse.get_line_drag_direction() {
+					direction::Direction2::NorthSouth => {
+						let x = mouse.click_start[0];
+						for y in mouse.click_start[1].min(mouse.pos[1])..=mouse.click_start[1].max(mouse.pos[1]) {
+							tris.extend(interaction.generate_select_tris(&tiles[[x as usize, y as usize]], [x, y]));
+						}
+					},
+					direction::Direction2::EastWest => {
+						let y = mouse.click_start[1];
+						for x in mouse.click_start[0].min(mouse.pos[0])..=mouse.click_start[0].max(mouse.pos[0]) {
+							tris.extend(interaction.generate_select_tris(&tiles[[x as usize, y as usize]], [x, y]));
+						}
+					},
+				}
+				tris
+			}
+			_ => texture::Texture::Select.generate_tris(mouse.pos).to_vec()
 		}
 	}
 }

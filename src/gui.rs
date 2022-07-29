@@ -19,6 +19,7 @@ counted_array!(const TOOLS: [Tool; _] = [
 	Tool { icon: texture::Texture::Tree, interaction: interaction::InteractionShape::Rectangle(interaction::TileInteraction::BuildCover(tile::Cover::Tree)) },
 	Tool { icon: texture::Texture::TestBuilding, interaction: interaction::InteractionShape::Dot(interaction::TileInteraction::BuildCover(tile::Cover::TestBuilding)) },
 	Tool { icon: texture::Texture::Gravel, interaction: interaction::InteractionShape::Rectangle(interaction::TileInteraction::ReplaceGround(tile::Ground::Gravel)) },
+	Tool { icon: texture::Texture::GravelRoadGUI, interaction: interaction::InteractionShape::RoadLine(tile::Road::Gravel) },
 ]);
 
 pub struct GUI {

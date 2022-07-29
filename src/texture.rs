@@ -46,7 +46,7 @@ pub enum Texture {
 	Grass,
 	Water,
 	Bricks,
-	//Select,
+	Select,
 	Tree,
 	TestBuilding,
 	SelectBuildable,
@@ -67,7 +67,7 @@ impl Texture {
 			Self::Grass => 0x01,
 			Self::Water => 0x02,
 			Self::Bricks => 0x03,
-			//Self::Select => 0x04,
+			Self::Select => 0x04,
 			Self::Tree => 0x05,
 			Self::TestBuilding => 0x06,
 			Self::SelectBuildable => 0x07,
@@ -100,14 +100,6 @@ impl Texture4Directional {
 	}
 
 	pub fn generate_tris(self, direction: direction::Direction4, pos: [u16; 2]) -> [vertex::Vertex; 6] {
-		generate_tris_from_id(
-			self.get_texture_id() + match direction {
-				direction::Direction4::North => 0,
-				direction::Direction4::East => 1,
-				direction::Direction4::South => 2,
-				direction::Direction4::West => 3,
-			},
-			pos,
-		)
+		generate_tris_from_id(self.get_texture_id() + direction.get_int_val(), pos)
 	}
 }

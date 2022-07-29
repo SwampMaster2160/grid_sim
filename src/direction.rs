@@ -26,3 +26,8 @@ impl Direction4 {
 		}
 	}
 }
+
+pub enum Direction2 {
+	NorthSouth,
+	EastWest,
+}

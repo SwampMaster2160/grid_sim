@@ -1,4 +1,5 @@
 use super::world;
+use super::direction;
 
 pub struct Mouse {
 	pub pos: [u16; 2],
@@ -22,5 +23,12 @@ impl Mouse {
 
 	pub fn set_click_start(&mut self) {
 		self.click_start = self.pos;
+	}
+
+	pub fn get_line_drag_direction(&self) -> direction::Direction2 {
+		match self.pos[0].abs_diff(self.click_start[0]) > self.pos[1].abs_diff(self.click_start[1]) {
+			false => direction::Direction2::NorthSouth,
+			true => direction::Direction2::EastWest,
+		}
 	}
 }
