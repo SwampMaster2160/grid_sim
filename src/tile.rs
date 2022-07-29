@@ -25,6 +25,42 @@ impl Ground {
 			Ground::Sand => texture::Texture::Sand,
 		}
 	}
+
+	fn is_land(self) -> bool {
+		match self {
+			Ground::Grass => true,
+			Ground::Water => false,
+			Ground::Bricks => true,
+			Ground::Gravel => true,
+			Ground::LeafLitter => true,
+			Ground::Swamp => false,
+			Ground::Sand => true,
+		}
+	}
+
+	fn is_water(self) -> bool {
+		match self {
+			Ground::Grass => false,
+			Ground::Water => true,
+			Ground::Bricks => false,
+			Ground::Gravel => false,
+			Ground::LeafLitter => false,
+			Ground::Swamp => true,
+			Ground::Sand => false,
+		}
+	}
+
+	fn is_fertile(self) -> bool {
+		match self {
+			Ground::Grass => true,
+			Ground::Water => false,
+			Ground::Bricks => false,
+			Ground::Gravel => false,
+			Ground::LeafLitter => true,
+			Ground::Swamp => true,
+			Ground::Sand => false,
+		}
+	}
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -65,6 +101,15 @@ impl Cover {
 				}
 				out
 			},
+		}
+	}
+
+	pub fn can_go_on_ground(&self, ground: Ground) -> bool {
+		match self {
+			Self::None => true,
+			Self::Tree => ground.is_land() && ground.is_fertile(),
+			Self::TestBuilding => ground.is_land(),
+			Self::Road(_) => ground.is_land(),
 		}
 	}
 }

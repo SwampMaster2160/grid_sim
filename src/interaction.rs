@@ -15,14 +15,21 @@ pub enum TileInteraction {
 impl TileInteraction {
 	pub fn interact(&self, tile: &mut tile::Tile) {
 		match self {
-			TileInteraction::ReplaceGround(ground) => tile.ground = *ground,
+			TileInteraction::ReplaceGround(ground) => {
+				if tile.cover.can_go_on_ground(*ground) {
+					tile.ground = *ground
+				}
+			},
 			TileInteraction::BuildCover(cover) => {
-				if matches!(tile.cover, tile::Cover::None) {
+				if matches!(tile.cover, tile::Cover::None) && cover.can_go_on_ground(tile.ground) {
 					tile.cover = *cover;
 				}
 			},
 			TileInteraction::DemolishCover => tile.cover = tile::Cover::None,
 			TileInteraction::BuildRoad(road_quarters) => {
+				if !tile::Cover::Road([tile::Road::None; 4]).can_go_on_ground(tile.ground) {
+					return
+				}
 				match &mut tile.cover {
 					tile::Cover::None => tile.cover = tile::Cover::Road(*road_quarters),
 					tile::Cover::Road(current_road_quarters) => {
@@ -40,15 +47,15 @@ impl TileInteraction {
 
 	pub fn generate_select_tris(&self, tile: &tile::Tile, pos: [u16; 2]) -> [vertex::Vertex; 6] {
 		match self {
-			TileInteraction::ReplaceGround(replace_with) => {
-				match *replace_with == tile.ground {
-					false => texture::Texture::SelectBuildable,
-					true => texture::Texture::SelectUnbuildable,
+			TileInteraction::ReplaceGround(ground) => {
+				match (*ground == tile.ground, tile.cover.can_go_on_ground(*ground)) {
+					(false, true) => texture::Texture::SelectBuildable,
+					_ => texture::Texture::SelectUnbuildable,
 				}.generate_tris(pos)
 			}
-			TileInteraction::BuildCover(_) => {
-				match tile.cover {
-					tile::Cover::None => texture::Texture::SelectBuildable,
+			TileInteraction::BuildCover(cover) => {
+				match (tile.cover, cover.can_go_on_ground(tile.ground)) {
+					(tile::Cover::None, true) => texture::Texture::SelectBuildable,
 					_ => texture::Texture::SelectUnbuildable,
 				}.generate_tris(pos)
 			},
@@ -59,7 +66,8 @@ impl TileInteraction {
 				}.generate_tris(pos)
 			}
 			TileInteraction::BuildRoad(_) => {
-				match matches!(tile.cover, tile::Cover::None) || matches!(tile.cover, tile::Cover::Road(_)) {
+				match (matches!(tile.cover, tile::Cover::None) || matches!(tile.cover, tile::Cover::Road(_))) &&
+				tile::Cover::Road([tile::Road::None; 4]).can_go_on_ground(tile.ground) {
 					true => texture::Texture::SelectBuildable,
 					false => texture::Texture::SelectUnbuildable,
 				}.generate_tris(pos)
