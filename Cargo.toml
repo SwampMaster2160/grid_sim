@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glium = "^0.31.0"
-image = "^0.24.2"
-ndarray = "^0.15.4"
-counted-array = "^0.1.2"
+glium = "0.32"
+image = "0.24"
+ndarray = "0.15"
+counted-array = "0.1"
